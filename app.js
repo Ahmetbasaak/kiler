@@ -3,6 +3,7 @@
   "use strict";
 
   const cfg = window.APP_CONFIG || {};
+  const autoLogin = !!(cfg.AUTO_LOGIN_EMAIL && cfg.AUTO_LOGIN_PASSWORD);
   const $ = (s, r = document) => r.querySelector(s);
   const app = $("#app");
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -69,6 +70,13 @@
       const was = !!S.session; S.session = session;
       if (session && !was) start(); else if (!session && was) { stopRealtime(); S.loaded = false; render(); }
     });
+    // İsteğe bağlı otomatik giriş (config.js içinde AUTO_LOGIN_EMAIL / AUTO_LOGIN_PASSWORD doluysa)
+    if (!S.session && autoLogin) {
+      app.innerHTML = `<div class="login"><img src="icons/icon-192.png" alt=""><h1>Kiler</h1><p>Açılıyor…</p></div>`;
+      const { data: d, error } = await sb.auth.signInWithPassword({ email: cfg.AUTO_LOGIN_EMAIL, password: cfg.AUTO_LOGIN_PASSWORD });
+      if (!error && d.session) { if (!S.session) { S.session = d.session; start(); } return; } // olay zaten tetiklediyse tekrar başlatma
+      return renderLogin(S.online ? "Otomatik giriş başarısız: bilgileri elle girin." : "İnternet bağlantısı yok.");
+    }
     if (S.session) start(); else render();
   }
 
@@ -342,7 +350,7 @@
       <h2>Veri</h2>
       <button class="btn secondary" data-act="export">Stoğu CSV olarak indir</button>
       <h2>Hesap</h2>
-      <button class="btn danger" data-act="logout">Çıkış yap</button>
+      ${autoLogin ? "" : `<button class="btn danger" data-act="logout">Çıkış yap</button>`}
       <p style="text-align:center;color:var(--muted);font-size:12px;margin-top:20px">Kiler · Verileriniz Supabase'de saklanır</p>`;
   }
 
