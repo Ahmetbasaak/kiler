@@ -75,3 +75,4 @@ index.html  styles.css  app.js  config.js   app code (no build step)
 manifest.webmanifest  sw.js  icons/          install + offline support
 supabase/schema.sql                          database, security, views
 ```
+ 
